@@ -1,0 +1,289 @@
+---
+title: "Technical Note: Curve fitting algorithm for multimodal particle size distributions – a theoretical basis"
+date: "2025-08-25"
+output:
+  pdf_document:
+    toc: true
+  github_document:
+    toc: true
+linkcolor: blue
+---
+
+------------------------------------------------------------------------
+
+Christopher N. Rapp^1^, Sining Niu^2^, Yue Zhang^2^, A. Gannet Hallar^3^, Fred J. Brechtel^4^, and Daniel J. Cziczo^1^
+
+^1^Department of Earth, Atmospheric, and Planetary Sciences, Purdue University, West Lafayette, Indiana, 47906-2051, USA
+
+^2^Department of Atmospheric Sciences, Texas A&M University, College Station, Texas, 77843-3150, USA
+
+^3^Department of Atmospheric Sciences, University of Utah, Salt Lake City, Utah, 84112-0102, USA
+
+^4^Brechtel Manufacturing Incorporated, Hayward, California, 94544, USA
+
+*Correspondence to*: Christopher N. Rapp (christopherrapp\@icloud.com)
+
+------------------------------------------------------------------------
+
+Source code for SMPS read functions are housed here <https://github.com/christopher-rapp/scripts-multimodal.git>
+
+------------------------------------------------------------------------
+
+# Setup
+
+## Retrieve Read Functions
+
+```{r, echo=FALSE, message=FALSE}
+
+devtools::source_url("https://raw.githubusercontent.com/christopher-rapp/scripts-multimodal/refs/heads/main/multimodal.R")
+
+devtools::source_url("https://raw.githubusercontent.com/christopher-rapp/scripts-multimodal/refs/heads/main/read_functions/readPSD_BMI.R")
+
+devtools::source_url("https://raw.githubusercontent.com/christopher-rapp/scripts-multimodal/refs/heads/main/read_functions/readPSD_NAS.R")
+
+devtools::source_url("https://raw.githubusercontent.com/christopher-rapp/scripts-multimodal/refs/heads/main/read_functions/readPSD_NC.R")
+
+devtools::source_url("https://raw.githubusercontent.com/christopher-rapp/scripts-multimodal/refs/heads/main/read_functions/readPSD_TSI.R")
+
+```
+
+## Import Libraries
+
+```{r, message=F}
+
+library(stringr)
+library(data.table)
+library(tidyr)
+library(dplyr)
+library(lubridate)
+library(logr)
+library(ggplot2)
+library(purrr)
+library(patchwork)
+library(ncdf4)
+```
+
+## User Paths
+
+To download the example data for BMI and TSI visit
+
+<https://github.com/christopher-rapp/scripts-multimodal/tree/main/example_data>
+
+Define user paths such as '\~/Library/Documents/multimodal/example/BMI/'
+
+```{r, echo = F, message = F}
+
+log.path = '~/Library/CloudStorage/Box-Box/Multimodal Curve Fitting/log/'
+
+import.path.BMI = '~/Library/CloudStorage/Box-Box/Multimodal Curve Fitting/example/BMI/'
+import.path.TSI = '~/Library/CloudStorage/Box-Box/Multimodal Curve Fitting/example/TSI/'
+import.path.NC = '~/Library/CloudStorage/Box-Box/Multimodal Curve Fitting/example/netCDF/'
+import.path.NAS = '~/Library/CloudStorage/Box-Box/Multimodal Curve Fitting/example/NASA-AMES/'
+
+```
+
+# Formatting Data
+
+Raw view of data format is appended to the bottom of this document
+
+## Brechtel Manufacturing Inc. (BMI) Data
+
+```{r}
+
+BMI.data.ls <- readPSD_BMI(import.path.BMI, tz = "US/Eastern")
+
+# Read functions export data as a list to account for multiple files in a directory
+dataPSD.BMI <- BMI.data.ls[[1]]
+```
+
+## TSI Data
+
+Use example data from Storm Peak Laboratory for a new particle formation event (NPF) on 2022-03-23 MDT.
+
+```{r}
+
+TSI.data.ls <- readPSD_TSI(import.path.TSI, tz = "US/Mountain")
+
+# Read functions export data as a list to account for multiple files in a directory
+dataPSD.TSI <- TSI.data.ls[[1]]
+```
+
+## netCDF Data
+
+Data were obtained from the Atmospheric Radiation Measurement (ARM) User Facility, a U.S. Department of Energy (DOE) Office of Science user facility managed by the Biological and Environmental Research Program.
+
+SGP SMPS data were obtained from the Atmospheric Radiation Measurement (ARM) User Facility, a U.S. Department of Energy (DOE) Office of Science user facility managed by the Biological and Environmental Research Program.
+
+Kuang, C., Singh, A., Howie, J., Salwen, C., & Hayes, C. Scanning mobility particle sizer (AOSSMPS), 2016-11-15 to 2025-06-23, Southern Great Plains (SGP), Lamont, OK (Extended and Co-located with C1) (E13). Atmospheric Radiation Measurement (ARM) User Facility. [https://doi.org/10.5439/1476898](https://nam04.safelinks.protection.outlook.com/?url=https%3A%2F%2Fdoi.org%2F10.5439%2F1476898&data=05%7C02%7Crapp5%40purdue.edu%7C3169aa02ccec49c7f95308ddb347fdca%7C4130bd397c53419cb1e58758d6d63f21%7C0%7C0%7C638863843967247118%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=ALFii3068kvIqc5dG4sN68sjbu3pqHGaYbM90rr5aFM%3D&reserved=0)
+
+Similarly for the BMI and TSI data, define the import.path of downloaded NC
+
+```{r}
+
+NC.data.ls <- readPSD_NC(import.path.NC)
+
+# Read functions export data as a list to account for multiple files in a directory
+dataPSD.NC <- NC.data.ls[[1]]
+```
+
+## NASA-AMES Data
+
+Data obtained from <https://ebas-data.nilu.no/DataSets.aspx?stations=US9050R&InstrumentTypes=smps&fromDate=1970-01-01&toDate=2025-12-31>.
+
+The EBAS database has largely been funded by the UN-ECE CLRTAP (EMEP), AMAP and through NILU internal resources. Specific developments have been possible due to projects like EUSAAR (EU-FP5)(EBAS web interface), EBAS-Online (Norwegian Research Council INFRA) (upgrading of database platform) and HTAP (European Commission DG-ENV)(import and export routines to build a secondary repository in support of [**www.htap.org**](http://www.htap.org/)). A large number of specific projects have supported development of data and meta data reporting schemes in dialog with data providers (EU)(CREATE, ACTRIS and others). 
+
+```{r}
+
+NAS.data.ls <- readPSD_NAS(import.path.NAS)
+
+# Read functions export data as a list to account for multiple files in a directory
+dataPSD.NAS <- NAS.data.ls[[1]]
+```
+
+# Running multimodal
+
+Let's run multimodal on an example dataset using a Brechtel SEMS (Model 2002). Note the log path will need to be changed to whatever location you'd like it sent to!
+
+## Example 1 - Laboratory Data
+
+```{r}
+
+# Frequency is null here because I already grouped data above
+# I've also removed the argument for the log.path which will default
+# to a temporary directory created by R which is deleted upon exiting an R session
+result <- multimodal.fitting(dataPSD.BMI,
+                             frequency = NULL,
+                             labeling = T,
+                             max.iterations = 20,
+                             max.modes = 6,
+                             lower.limit = 10,
+                             upper.limit = 1500,
+                             NMRSE.threshold = 0.05,
+                             FVU.threshold = 20,
+                             verbose = T)
+
+# As there is only 1 data file for this set, we will flatten the list
+
+result <- flatten(result)
+```
+
+## Outputs
+
+The first element of result is a pass flag i.e. T or F
+
+```{r}
+
+result$pass
+```
+
+The second is the plot which consists of three panels
+
+```{r, fig.width = 8, fig.height = 8, fig.align = "center", echo=FALSE}
+
+result[[2]]
+```
+
+The remaining outputs are predicted data, the data used to plot curves, and evaluation parameters
+
+```{r}
+
+head(result[[3]])
+head(result[[4]])
+head(result[[5]])
+result[[6]]
+```
+
+## Example 2 - Storm Peak Laboratory
+
+```{r, fig.width = 8, fig.height = 8, fig.align = "center", echo=FALSE}
+
+# Frequency is null here because I already grouped data above
+# Here we are sending the log to a specific location
+tmp <- multimodal.fitting(dataPSD.TSI,
+                          log.path = log.path,
+                          frequency = NULL,
+                          labeling = T,
+                          max.iterations = 20,
+                          max.modes = 6,
+                          lower.limit = 10,
+                          upper.limit = 1500,
+                          NMRSE.threshold = 0.05,
+                          FVU.threshold = 20,
+                          verbose = T)
+```
+
+Notice the failure message? This is because the dataset begins for bin diameter 9.14. Now we can retry with adjusted limits.
+
+```{r, fig.width = 8, fig.height = 8, fig.align = "center", echo=FALSE}
+
+# Frequency is null here because I already grouped data above
+tmp <- multimodal.fitting(dataPSD.TSI,
+                          log.path = log.path,
+                          frequency = NULL,
+                          labeling = T,
+                          max.iterations = 20,
+                          max.modes = 6,
+                          lower.limit = 8,
+                          upper.limit = 1500,
+                          NMRSE.threshold = 0.05,
+                          FVU.threshold = 20,
+                          verbose = T)
+
+```
+
+For this file there is a NPF event, but currently the averaging across the entire day removes all temporal variation. We will instead select times between 07:00 and 15:00 and use an hourly frequency.
+
+```{r, fig.width = 8, fig.height = 8, fig.align = "center", echo=FALSE}
+
+data <- subset(dataPSD.TSI, dataPSD.TSI$`Local Time` >= as.POSIXct("2022-03-23 7:00:00") &
+                 dataPSD.TSI$`Local Time` <= as.POSIXct("2022-03-23 15:00:00"))
+
+# Frequency is null here because I already grouped data above
+tmp <- multimodal.fitting(data,
+                          log.path = log.path,
+                          frequency = 60, # number of minutes
+                          labeling = T,
+                          max.iterations = 20,
+                          max.modes = 10,
+                          lower.limit = 8,
+                          upper.limit = 1500,
+                          NMRSE.threshold = 0.05,
+                          FVU.threshold = 20,
+                          verbose = F)
+
+map(tmp, 2)
+
+```
+
+Note - for higher resolution scans, the variation within the scan may be too high to capture. The following is an example.
+
+```{r, fig.width = 8, fig.height = 8, fig.align = "center", echo=FALSE}
+
+data <- subset(dataPSD.TSI, dataPSD.TSI$`Local Time` >= as.POSIXct("2022-03-23 10:00:00") &
+                 dataPSD.TSI$`Local Time` <= as.POSIXct("2022-03-23 10:05:00"))
+
+# Frequency is null here because I already grouped data above
+tmp <- multimodal.fitting(data,
+                          log.path = log.path,
+                          frequency = 5, # number of minutes
+                          labeling = T,
+                          max.iterations = 20,
+                          max.modes = 10,
+                          lower.limit = 8,
+                          upper.limit = 1500,
+                          NMRSE.threshold = 0.05,
+                          FVU.threshold = 20,
+                          verbose = F)
+
+map(tmp, 2)
+```
+
+```{r}
+head(dataPSD.BMI)
+
+head(dataPSD.TSI)
+
+head(dataPSD.NAS)
+
+head(dataPSD.NC)
+```
