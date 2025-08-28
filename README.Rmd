@@ -1,10 +1,10 @@
 ---
 title: "Technical Note: Curve fitting algorithm for multimodal particle size distributions – a theoretical basis"
-date: "2025-08-25"
+date: "2025-08-28"
 output:
-  github_document:
-    toc: true
   pdf_document:
+    toc: true
+  github_document:
     toc: true
 linkcolor: blue
 ---
@@ -25,7 +25,7 @@ Christopher N. Rapp^1^, Sining Niu^2^, Yue Zhang^2^, A. Gannet Hallar^3^, Fred J
 
 ------------------------------------------------------------------------
 
-Source code for SMPS read functions are housed here <https://github.com/christopher-rapp/scripts-multimodal.git>
+Source code for SMPS read functions are housed here [https://github.com/christopher-rapp/multimodal.git](https://github.com/christopher-rapp/multimodal/tree/main/R){.uri}
 
 ------------------------------------------------------------------------
 
@@ -35,15 +35,15 @@ Source code for SMPS read functions are housed here <https://github.com/christop
 
 ```{r, echo=FALSE, message=FALSE}
 
-devtools::source_url("https://raw.githubusercontent.com/christopher-rapp/scripts-multimodal/refs/heads/main/multimodal.R")
+devtools::source_url("https://raw.githubusercontent.com/christopher-rapp/multimodal/refs/heads/main/R/multimodal.R")
 
-devtools::source_url("https://raw.githubusercontent.com/christopher-rapp/scripts-multimodal/refs/heads/main/read_functions/readPSD_BMI.R")
+devtools::source_url("https://raw.githubusercontent.com/christopher-rapp/multimodal/refs/heads/main/R/readPSD_BMI.R")
 
-devtools::source_url("https://raw.githubusercontent.com/christopher-rapp/scripts-multimodal/refs/heads/main/read_functions/readPSD_NAS.R")
+devtools::source_url("https://raw.githubusercontent.com/christopher-rapp/multimodal/refs/heads/main/R/readPSD_TSI.R")
 
-devtools::source_url("https://raw.githubusercontent.com/christopher-rapp/scripts-multimodal/refs/heads/main/read_functions/readPSD_NC.R")
+devtools::source_url("https://raw.githubusercontent.com/christopher-rapp/multimodal/refs/heads/main/R/readPSD_NC.R")
 
-devtools::source_url("https://raw.githubusercontent.com/christopher-rapp/scripts-multimodal/refs/heads/main/read_functions/readPSD_TSI.R")
+devtools::source_url("https://raw.githubusercontent.com/christopher-rapp/multimodal/refs/heads/main/R/readPSD_NAS.R")
 
 ```
 
@@ -65,9 +65,9 @@ library(ncdf4)
 
 ## User Paths
 
-To download the example data for BMI and TSI visit
+To download the example data for BMI and TSI visit. For NASA-AMES or netCDF examples see linked sources below.
 
-<https://github.com/christopher-rapp/scripts-multimodal/tree/main/example_data>
+<https://github.com/christopher-rapp/multimodal/tree/main/data>
 
 Define user paths such as '\~/Library/Documents/multimodal/example/BMI/'
 

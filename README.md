@@ -1,7 +1,7 @@
 Technical Note: Curve fitting algorithm for multimodal particle size
 distributions – a theoretical basis
 ================
-2025-08-25
+2025-08-28
 
 - [Setup](#setup)
   - [Retrieve Read Functions](#retrieve-read-functions)
@@ -42,7 +42,8 @@ Lake City, Utah, 84112-0102, USA
 ------------------------------------------------------------------------
 
 Source code for SMPS read functions are housed here
-<https://github.com/christopher-rapp/scripts-multimodal.git>
+<a href="https://github.com/christopher-rapp/multimodal/tree/main/R"
+class="uri">https://github.com/christopher-rapp/multimodal.git</a>
 
 ------------------------------------------------------------------------
 
@@ -67,9 +68,10 @@ library(ncdf4)
 
 ## User Paths
 
-To download the example data for BMI and TSI visit
+To download the example data for BMI and TSI visit. For NASA-AMES or
+netCDF examples see linked sources below.
 
-<https://github.com/christopher-rapp/scripts-multimodal/tree/main/example_data>
+<https://github.com/christopher-rapp/multimodal/tree/main/data>
 
 Define user paths such as ‘~/Library/Documents/multimodal/example/BMI/’
 
@@ -171,7 +173,7 @@ result <- multimodal.fitting(dataPSD.BMI,
                              verbose = T)
 ```
 
-    ## [1] "Log Path: /var/folders/2j/rmf9p1l50wg904hz8qkpvc4m0000gn/T//RtmpTBVaD4/multimodal20231031181523_20250826105706.log"
+    ## [1] "Log Path: /var/folders/2j/rmf9p1l50wg904hz8qkpvc4m0000gn/T//RtmpvBrRtr/multimodal20231031181523_20250828125708.log"
     ## [1] "Current Dataset Time: 2023-10-31 22:15:23 UTC"
     ## [1] "Dataset sampling frequency is 2.4 min"
     ## [1] "2023-10-31 22:15:23: Current Loop Iteration: 1, Remaining Variance: 94.93%, Number of Modes: 1"
@@ -266,7 +268,7 @@ result[[6]]
 
 ## Example 2 - Storm Peak Laboratory
 
-    ## [1] "Log Path: ~/Library/CloudStorage/Box-Box/Multimodal Curve Fitting/log//multimodal20220323020341_20250826105709.log"
+    ## [1] "Log Path: ~/Library/CloudStorage/Box-Box/Multimodal Curve Fitting/log//multimodal20220323020341_20250828125711.log"
     ## [1] "Current Dataset Time: 2022-03-23 06:03:41 UTC"
     ## [1] "Dataset sampling frequency is 5 min"
     ## [1] "2022-03-23 06:03:41: Error, please modify lower and upper limits to accommadate data set"
@@ -274,7 +276,7 @@ result[[6]]
 Notice the failure message? This is because the dataset begins for bin
 diameter 9.14. Now we can retry with adjusted limits.
 
-    ## [1] "Log Path: ~/Library/CloudStorage/Box-Box/Multimodal Curve Fitting/log//multimodal20220323020341_20250826105709.log"
+    ## [1] "Log Path: ~/Library/CloudStorage/Box-Box/Multimodal Curve Fitting/log//multimodal20220323020341_20250828125712.log"
     ## [1] "Current Dataset Time: 2022-03-23 06:03:41 UTC"
     ## [1] "Dataset sampling frequency is 5 min"
     ## [1] "2022-03-23 06:03:41: Current Loop Iteration: 1, Remaining Variance: 1.11%, Number of Modes: 1"
@@ -285,7 +287,7 @@ For this file there is a NPF event, but currently the averaging across
 the entire day removes all temporal variation. We will instead select
 times between 07:00 and 15:00 and use an hourly frequency.
 
-    ## [1] "Log Path: ~/Library/CloudStorage/Box-Box/Multimodal Curve Fitting/log//multimodal20220323070340_20250826105710.log"
+    ## [1] "Log Path: ~/Library/CloudStorage/Box-Box/Multimodal Curve Fitting/log//multimodal20220323070340_20250828125712.log"
 
     ## $`2022-03-23 11:00:00`
 
@@ -334,7 +336,7 @@ times between 07:00 and 15:00 and use an hourly frequency.
 Note - for higher resolution scans, the variation within the scan may be
 too high to capture. The following is an example.
 
-    ## [1] "Log Path: ~/Library/CloudStorage/Box-Box/Multimodal Curve Fitting/log//multimodal20220323100340_20250826105722.log"
+    ## [1] "Log Path: ~/Library/CloudStorage/Box-Box/Multimodal Curve Fitting/log//multimodal20220323100340_20250828125724.log"
 
     ## $`2022-03-23 14:05:00`
 
