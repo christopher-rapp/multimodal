@@ -1,6 +1,6 @@
 #' Title: Multimodal lognormal particle size distribution fitting algorithm
 #'
-#' @author Christopher Rapp - first and corresponding author, Fred Brechtel, and Daniel Cziczo
+#' @author Christopher Rapp
 #'
 #' @description
 #' A function that fits a multimodal lognormal particle size distribution or MM-LPSD to
