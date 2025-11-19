@@ -43,17 +43,18 @@
 # data = rawSEMS.df
 
 
-multimodal.fitting <- function(data, log.path, labeling, frequency, max.iterations, max.modes, lower.limit, upper.limit, NMRSE.threshold, FVU.threshold, FVU.tolerance, verbose){
+multimodal.fitting <- function(data, log.path, labeling, frequency, max.iterations, max.modes, smoothing, lower.limit, upper.limit, NMRSE.threshold, FVU.threshold, FVU.tolerance, verbose){
 
   # Default arguments ----------------------------------------------------------
 
   if(missing(labeling)) labeling <- T
   if(missing(max.iterations)) max.iterations <- 20
   if(missing(max.modes)) max.modes <- 5
+  if(missing(smoothing)) smoothing <- T
   if(missing(lower.limit)) lower.limit <- 10
   if(missing(upper.limit)) upper.limit <- 1000
   if(missing(NMRSE.threshold)) NMRSE.threshold <- 0.05
-  if(missing(FVU.threshold)) FVU.threshold <- 20
+  if(missing(FVU.threshold)) FVU.threshold <- 10
   if(missing(FVU.tolerance)) FVU.tolerance <- 1
   if(missing(verbose)) verbose <- FALSE
   if(missing(log.path)) log.path <- tempdir()
@@ -330,22 +331,47 @@ multimodal.fitting <- function(data, log.path, labeling, frequency, max.iteratio
               tmp.data$residual = tmp.data$dNdlogDp
             }
 
+            # Create a smoothed residual vector for more robust peak identification
+            # Residuals
+            {
+              smooth.break <<- FALSE
+
+              tryCatch(expr = {
+                smoothingSpline = smooth.spline(tmp.data$Dp, tmp.data$residual, cv = T)
+              },
+              error = function(e){
+                smooth.break <<- TRUE
+              })
+            }
+
             # Find all peaks
             {
-              # Peak identification
-              peaks.df <- as.data.frame(pracma::findpeaks(tmp.data$residual,
-                                                          minpeakdistance = 5,
-                                                          sortstr = T
-              ))
+              if (smooth.break || isFALSE(smoothing)){
+
+                # Peak identification
+                peaks.df <- as.data.frame(pracma::findpeaks(tmp.data$residual,
+                                                            minpeakdistance = 5,
+                                                            sortstr = T
+                ))
+              } else if (isFALSE(smooth.break) && isTRUE(smoothing)){
+
+                peaks.df <- as.data.frame(pracma::findpeaks(smoothingSpline$y,
+                                                            minpeakdistance = 5,
+                                                            sortstr = T
+                ))
+              }
 
               # Use indices to match corresponding diameters
               peaks.df$Max <- peaks.df$V1
-              peaks.df$Mode <- tmp.data$Dp[peaks.df$V2]
               peaks.df$Lower <- tmp.data$Dp[peaks.df$V3]
+              peaks.df$Mode <- tmp.data$Dp[peaks.df$V2]
               peaks.df$Upper <- tmp.data$Dp[peaks.df$V4]
               peaks.df$Width = peaks.df$V4 - peaks.df$V3
+              peaks.df$Range = peaks.df$Upper - peaks.df$Lower
+            }
 
-              # Stop code from continuing if there are no ramps detected which means the dataset will be empty and continue to throw errors
+            # Stop code from continuing if there are no ramps detected which means the dataset will be empty and continue to throw errors
+            {
               if (m > nrow(peaks.df)) {
 
                 tmp.print <- paste0(date.time.c, ": Terminating loop, no remaining peaks")
@@ -691,7 +717,13 @@ multimodal.fitting <- function(data, log.path, labeling, frequency, max.iteratio
 
         # Pearson Correlation
         {
-          stats.R2 = round(cor(predicted.dN, actual.dN), 4)
+          stats.R2 = round(cor(predicted.dN, actual.dN)^2, 4)
+        }
+
+        # FVU
+        # As the residuals are sometimes set to 0 during the loop, the actual FVU needs to be calculated
+        {
+          FVU = round((1 - stats.R2), 4)
         }
 
         # RMSE
@@ -743,7 +775,7 @@ multimodal.fitting <- function(data, log.path, labeling, frequency, max.iteratio
           print(paste0("Concentration RMSE: ", stats.RMSE, " n/cc"))
         }
 
-        if (FVU > FVU.threshold){
+        if (FVU > FVU.threshold/100){
           flag.control <- FALSE
         }
 
@@ -777,7 +809,14 @@ multimodal.fitting <- function(data, log.path, labeling, frequency, max.iteratio
         y.limits = c(-1*max(c(export.df$`Predicted dNdlogDp`, export.df$`Actual dNdlogDp`))/10,
                      max(c(export.df$`Predicted dNdlogDp`, export.df$`Actual dNdlogDp`))/10)
 
-        y.breaks = unique(c(pretty(export.df$`Predicted dNdlogDp`), pretty(export.df$`Actual dNdlogDp`)))
+        y.breaks = sort(unique(c(pretty(export.df$`Predicted dNdlogDp`), pretty(export.df$`Actual dNdlogDp`))))
+
+        # When the breaks are uneven, force a reset
+        if (any(diff(diff(y.breaks)) < 0)){
+          y.breaks <- pretty(y.breaks, n = 10)
+        } else {
+          y.breaks
+        }
 
         x.label.positions = round(log10(x.limits))
 
