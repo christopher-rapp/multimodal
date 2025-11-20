@@ -648,6 +648,7 @@ multimodal.fitting <- function(data, log.path, labeling, frequency, max.iteratio
             tmp.df[s, 2] <- c(coef(tmp.ls[[s]]))[1]
             tmp.df[s, 3] <- c(coef(tmp.ls[[s]]))[2]
             tmp.df[s, 4] <- c(coef(tmp.ls[[s]]))[3]
+            tmp.df[s, 5] <- BIC(tmp.ls[[s]])
             tmp.df[s, 6] <- deviance(tmp.ls[[s]])
             tmp.df[s, 7] <- sum((tmp.ls[[s]]$m$getEnv()$y - mean(tmp.ls[[s]]$m$getEnv()$y))^2)
             tmp.df[s, 8] <- 1 - tmp.df[s, 6]/tmp.df[s, 7]
