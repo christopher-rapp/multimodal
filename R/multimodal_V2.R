@@ -418,7 +418,7 @@ multimodal.fitting <- function(data, log.path, labeling, frequency, max.iteratio
                   peaks.df$N = sum(tmp.dNdlogDp*tmp.dlogDp)
                 } else {
 
-                  tmp.print <- paste0(date.time.c, ": Current Loop Iteration: ", i, ", Negative Concentration!")
+                  tmp.print <- paste0(date.time.c, ": Current Loop: ", i, ", Negative Concentration!")
 
                   if (verbose){
                     # Print to console
@@ -454,7 +454,7 @@ multimodal.fitting <- function(data, log.path, labeling, frequency, max.iteratio
                 # If GSD fails, increase iteration counter and try the second peak
                 if (is.nan(GSD)){
 
-                  tmp.print <- paste0(date.time.c, ": Current Loop Iteration: ", i, ", GSD Error!")
+                  tmp.print <- paste0(date.time.c, ": Current Loop: ", i, ", GSD Error!")
 
                   if (verbose){
                     # Print to console
@@ -556,7 +556,7 @@ multimodal.fitting <- function(data, log.path, labeling, frequency, max.iteratio
 
               tmp.data$residual[which(tmp.data$Dp < peaks.df$Upper & tmp.data$Dp > peaks.df$Lower)] <- 0
 
-              tmp.print <- paste0(date.time.c, ": Current Loop Iteration: ", i, ", Peak estimation is 150% higher than data, resetting to zero and retrying")
+              tmp.print <- paste0(date.time.c, ": Current Loop: ", i, ", Peak estimation is 150% higher than data, resetting to zero and retrying")
 
               if (verbose){
                 # Print to console
@@ -570,7 +570,7 @@ multimodal.fitting <- function(data, log.path, labeling, frequency, max.iteratio
               }
             } else if (isTRUE(any(p.N >= 0.05, p.GSD >= 0.05, p.Dpg >= 0.05)) == T){
 
-              tmp.print <- paste0(date.time.c, ": Current Loop Iteration: ", i, ", LM-NLS significance greater than 0.05")
+              tmp.print <- paste0(date.time.c, ": Current Loop: ", i, ", LM-NLS significance greater than 0.05")
 
               if (verbose){
                 # Print to console
