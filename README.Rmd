@@ -1,6 +1,6 @@
 ---
-title: "Technical Note: Curve fitting algorithm for multimodal particle size distributions – a theoretical basis"
-date: "2025-08-28"
+title: "Curve fitting algorithm for multimodal particle size distributions – a theoretical basis"
+date: "2025-11-20"
 output:
   pdf_document:
     toc: true
@@ -25,17 +25,17 @@ Christopher N. Rapp^1^, Sining Niu^2^, Yue Zhang^2^, A. Gannet Hallar^3^, Fred J
 
 ------------------------------------------------------------------------
 
-Source code for SMPS read functions are housed here [https://github.com/christopher-rapp/multimodal.git](https://github.com/christopher-rapp/multimodal/tree/main/R){.uri}
+Source code for helper read functions are housed here [https://github.com/christopher-rapp/multimodal.git](https://github.com/christopher-rapp/multimodal/tree/main/R){.uri}
 
 ------------------------------------------------------------------------
 
-# Setup
+# 1 Setup
 
-## Retrieve Read Functions
+## 1.1 Retrieve Read Functions
 
 ```{r, echo=FALSE, message=FALSE}
 
-devtools::source_url("https://raw.githubusercontent.com/christopher-rapp/multimodal/refs/heads/main/R/multimodal.R")
+devtools::source_url("https://raw.githubusercontent.com/christopher-rapp/multimodal/refs/heads/main/R/multimodal_V2.R")
 
 devtools::source_url("https://raw.githubusercontent.com/christopher-rapp/multimodal/refs/heads/main/R/readPSD_BMI.R")
 
@@ -47,7 +47,7 @@ devtools::source_url("https://raw.githubusercontent.com/christopher-rapp/multimo
 
 ```
 
-## Import Libraries
+## 1.2 Import Libraries
 
 ```{r, message=F}
 
@@ -63,7 +63,7 @@ library(patchwork)
 library(ncdf4)
 ```
 
-## User Paths
+## 1.3 User Paths
 
 To download the example data for BMI and TSI visit. For NASA-AMES or netCDF examples see linked sources below.
 
@@ -82,11 +82,11 @@ import.path.NAS = '~/Library/CloudStorage/Box-Box/Multimodal Curve Fitting/examp
 
 ```
 
-# Formatting Data
+# 2. Formatting Data
 
 Raw view of data format is appended to the bottom of this document
 
-## Brechtel Manufacturing Inc. (BMI) Data
+## 2.1 Brechtel Manufacturing Inc. (BMI) Data
 
 ```{r}
 
@@ -96,9 +96,9 @@ BMI.data.ls <- readPSD_BMI(import.path.BMI, tz = "US/Eastern")
 dataPSD.BMI <- BMI.data.ls[[1]]
 ```
 
-## TSI Data
+## 2.2 TSI Data
 
-Use example data from Storm Peak Laboratory for a new particle formation event (NPF) on 2022-03-23 MDT.
+Use example data from Storm Peak Laboratory for a new particle formation event (NPF) on 2022-03-23.
 
 ```{r}
 
@@ -108,7 +108,7 @@ TSI.data.ls <- readPSD_TSI(import.path.TSI, tz = "US/Mountain")
 dataPSD.TSI <- TSI.data.ls[[1]]
 ```
 
-## netCDF Data
+## 2.3 netCDF Data
 
 Data were obtained from the Atmospheric Radiation Measurement (ARM) User Facility, a U.S. Department of Energy (DOE) Office of Science user facility managed by the Biological and Environmental Research Program.
 
@@ -126,7 +126,7 @@ NC.data.ls <- readPSD_NC(import.path.NC)
 dataPSD.NC <- NC.data.ls[[1]]
 ```
 
-## NASA-AMES Data
+## 2.4 NASA-AMES Data
 
 Data obtained from <https://ebas-data.nilu.no/DataSets.aspx?stations=US9050R&InstrumentTypes=smps&fromDate=1970-01-01&toDate=2025-12-31>.
 
@@ -140,11 +140,11 @@ NAS.data.ls <- readPSD_NAS(import.path.NAS)
 dataPSD.NAS <- NAS.data.ls[[1]]
 ```
 
-# Running multimodal
+# 3. Running multimodal
 
 Let's run multimodal on an example dataset using a Brechtel SEMS (Model 2002). Note the log path will need to be changed to whatever location you'd like it sent to!
 
-## Example 1 - Laboratory Data
+## 3.1 Example 1 - Laboratory Data
 
 ```{r}
 
@@ -154,20 +154,21 @@ Let's run multimodal on an example dataset using a Brechtel SEMS (Model 2002). N
 result <- multimodal.fitting(dataPSD.BMI,
                              frequency = NULL,
                              labeling = T,
-                             max.iterations = 20,
+                             max.iterations = 30,
                              max.modes = 6,
+                             smoothing = F,
                              lower.limit = 10,
                              upper.limit = 1500,
                              NMRSE.threshold = 0.05,
-                             FVU.threshold = 20,
+                             FVU.threshold = 5,
+                             FVU.tolerance = 0.1,
                              verbose = T)
 
 # As there is only 1 data file for this set, we will flatten the list
-
 result <- flatten(result)
 ```
 
-## Outputs
+### 3.1.1 Outputs
 
 The first element of result is a pass flag i.e. T or F
 
@@ -178,38 +179,61 @@ result$pass
 
 The second is the plot which consists of three panels
 
-```{r, fig.width = 8, fig.height = 8, fig.align = "center", echo=FALSE}
+```{r, fig.width = 8, fig.height = 8, fig.align = "center", echo=FALSE, warning=FALSE}
 
 result[[2]]
 ```
 
-The remaining outputs are predicted data, the data used to plot curves, and evaluation parameters
+**Figure S1** - An example of how to use the multimodal algorithm on example laboratory data. Note this reproduces the full version of Figure 2 in the manuscript.
+
+The remaining outputs are data.frames of the combined actual/predicted data (Table S1), the data used to plot curves (Table S2), lognormal parameters of the modes (Table S3), and text output of the evaluation parameters.
+
+**Table S1 -** Actual and predicted data for each diameter. Here we only present the first 6 rows of data for brevity. Note units and proper notation are missing due to restrictions for data.frame objects. From left to right: particle diameter (nm), predicted concentration (dN/dlogD~p~), predicted number concentration (n cm^-3^), actual measurment concentration (dN/dlogD~p~), actual number concentration (n cm^-3^), residual particle concentration (dN/dlogD~p~), residual number concentration (n cm^-3^), and ratio of actual to predicted concentration for each bin.
 
 ```{r}
 
-head(result[[3]])
-head(result[[4]])
-head(result[[5]])
-result[[6]]
+knitr::kable(result[[3]][1:6, ], format="html")
 ```
 
-## Example 2 - Storm Peak Laboratory
+**Table S2 -** Predicted concentration (dN/dlogD~p~) for each identified mode to plot fitted modes. From left to right: particle diameter (nm), modes 1-6 concentration (dN/dlogD~p~), and total concentration in (dN/dlogD~p~).
+
+```{r}
+
+knitr::kable(result[[4]][1:6, ], format="html")
+
+```
+
+**Table S3 -** Lognormal parameters, peak identification diameters, and statistics. From left to right: mode label, total number concentration (n cm^-3^), geometric mean diameter (nm), max concentration (dN/dlogD~p~) of identified peak, lower diameter limit (nm), mode diameter (nm), upper diameter limit (nm), width in bin resolution of file, Bayesian Information Criterion, residual sum of squares, total sum of squares, coefficient of correlation, and Student's t-test significance values for each fitted mode.
+
+```{r}
+
+knitr::kable(result[[5]][1:6, ], format="html")
+```
+
+**Table S4** - Statistical evaluation of the summed mode fits compared to the actual measurement. Pearson correlation coefficient, root mean square error of concentration (dN/dlogD~p~) , max-min normalized root mean square error concentration (dN/dlogD~p~), root mean square error of number concentration (n cm^-3^) , max-min normalized root mean square error of number concentration (n cm^-3^) , output of Student's t-test, and Chi-squared goodness-of-fit. Note as mentioned in the article, significance or goodness-of-fit testing did not demonstrate effectiveness in evaluating the model performance.
+
+```{r}
+
+knitr::kable(result[[6]])
+```
+
+## 3.2 Example 2 - Storm Peak Laboratory
 
 ```{r, fig.width = 8, fig.height = 8, fig.align = "center", echo=FALSE}
 
 # Frequency is null here because I already grouped data above
 # Here we are sending the log to a specific location
 tmp <- multimodal.fitting(dataPSD.TSI,
-                          log.path = log.path,
-                          frequency = NULL,
                           labeling = T,
-                          max.iterations = 20,
+                          frequency = NULL,
+                          max.iterations = 30,
                           max.modes = 6,
                           lower.limit = 10,
-                          upper.limit = 1500,
-                          NMRSE.threshold = 0.05,
-                          FVU.threshold = 20,
-                          verbose = T)
+                          upper.limit = 500,
+                          NMRSE.threshold = 0.1,
+                          FVU.threshold = 10,
+                          FVU.tolerance = 0.1,
+                          verbose = F) 
 ```
 
 Notice the failure message? This is because the dataset begins for bin diameter 9.14. Now we can retry with adjusted limits.
@@ -218,72 +242,72 @@ Notice the failure message? This is because the dataset begins for bin diameter 
 
 # Frequency is null here because I already grouped data above
 tmp <- multimodal.fitting(dataPSD.TSI,
-                          log.path = log.path,
+                          labeling = T,
                           frequency = NULL,
-                          labeling = T,
-                          max.iterations = 20,
+                          smoothing = F,
+                          max.iterations = 30,
                           max.modes = 6,
-                          lower.limit = 8,
-                          upper.limit = 1500,
-                          NMRSE.threshold = 0.05,
-                          FVU.threshold = 20,
-                          verbose = T)
+                          lower.limit = 5,
+                          upper.limit = 500,
+                          NMRSE.threshold = 0.1,
+                          FVU.threshold = 10,
+                          FVU.tolerance = 0.1,
+                          verbose = F) 
 
+tmp$`2022-03-23 06:03:41`$plot
 ```
 
-For this file there is a NPF event, but currently the averaging across the entire day removes all temporal variation. We will instead select times between 07:00 and 15:00 and use an hourly frequency.
+**Figure 2** - Example of applying the multimodal.fitting function to a day of SPL averaged from 6AM to 6 PM. Note with the high averaging time a small peak appears where NPF events skew the average distribution between 10 - 20 nm.
+
+Within this example TSI file for SPL there is a NPF event, but currently the averaging across the entire day removes all temporal variation. We will instead select times between 10:00 and 11:00 local time where the NPF event is just beginning and use high frequency data with smoothing to account for noise. We will only show two examples.
 
 ```{r, fig.width = 8, fig.height = 8, fig.align = "center", echo=FALSE}
 
-data <- subset(dataPSD.TSI, dataPSD.TSI$`Local Time` >= as.POSIXct("2022-03-23 7:00:00") &
-                 dataPSD.TSI$`Local Time` <= as.POSIXct("2022-03-23 15:00:00"))
+data <- subset(dataPSD.TSI, dataPSD.TSI$`Local Time` >= as.POSIXct("2022-03-23 11:00:00") &
+                 dataPSD.TSI$`Local Time` <= as.POSIXct("2022-03-23 12:00:00"))
 
 # Frequency is null here because I already grouped data above
 tmp <- multimodal.fitting(data,
                           log.path = log.path,
-                          frequency = 60, # number of minutes
                           labeling = T,
-                          max.iterations = 20,
-                          max.modes = 10,
-                          lower.limit = 8,
-                          upper.limit = 1500,
-                          NMRSE.threshold = 0.05,
-                          FVU.threshold = 20,
-                          verbose = F)
-
-map(tmp, 2)
-
-```
-
-Note - for higher resolution scans, the variation within the scan may be too high to capture. The following is an example.
-
-```{r, fig.width = 8, fig.height = 8, fig.align = "center", echo=FALSE}
-
-data <- subset(dataPSD.TSI, dataPSD.TSI$`Local Time` >= as.POSIXct("2022-03-23 10:00:00") &
-                 dataPSD.TSI$`Local Time` <= as.POSIXct("2022-03-23 10:05:00"))
-
-# Frequency is null here because I already grouped data above
-tmp <- multimodal.fitting(data,
-                          log.path = log.path,
                           frequency = 5, # number of minutes
-                          labeling = T,
-                          max.iterations = 20,
-                          max.modes = 10,
-                          lower.limit = 8,
-                          upper.limit = 1500,
-                          NMRSE.threshold = 0.05,
-                          FVU.threshold = 20,
-                          verbose = F)
+                          smoothing = T,
+                          max.iterations = 30,
+                          max.modes = 6,
+                          lower.limit = 5,
+                          upper.limit = 500,
+                          NMRSE.threshold = 0.1,
+                          FVU.threshold = 10,
+                          FVU.tolerance = 0.1,
+                          verbose = F) 
 
-map(tmp, 2)
+plots <- map(tmp, 2)
+
+plots$`2022-03-23 15:30:00`
+plots$`2022-03-23 15:55:00`
+
+```
+
+Now for the hour of data, 10 of the 12 fittings (83% were successful) (i.e. explained 90% of concentration variance and had a NRMSE of 0.1).
+
+```{r}
+
+# Look at the first element of each list
+map(tmp, 1)
+
 ```
 
 ```{r}
-head(dataPSD.BMI)
 
-head(dataPSD.TSI)
-
-head(dataPSD.NAS)
-
-head(dataPSD.NC)
+                          labeling = T
+                          frequency = 5
+                          smoothing = T
+                          max.iterations = 30
+                          max.modes = 6
+                          lower.limit = 5
+                          upper.limit = 500
+                          NMRSE.threshold = 0.1
+                          FVU.threshold = 10
+                          FVU.tolerance = 0.1
+                          verbose = F
 ```
