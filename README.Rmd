@@ -55,6 +55,7 @@ devtools::source_url("https://raw.githubusercontent.com/christopher-rapp/multimo
 ```{r, message=F}
 
 library(stringr)
+library(formatR)
 library(data.table)
 library(tidyr)
 library(dplyr)
@@ -64,6 +65,11 @@ library(ggplot2)
 library(purrr)
 library(patchwork)
 library(ncdf4)
+```
+
+```{r, echo = F}
+
+knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = TRUE)
 ```
 
 ## 1.3 User Paths
@@ -155,6 +161,7 @@ Let's run multimodal on an example dataset using a Brechtel SEMS (Model 2002). N
 # I've also removed the argument for the log.path which will default
 # to a temporary directory created by R which is deleted upon exiting an R session
 result <- multimodal.fitting(dataPSD.BMI,
+                             log.path,
                              frequency = NULL,
                              labeling = T,
                              max.iterations = 30,
@@ -205,7 +212,7 @@ knitr::kable(round(result[[3]][1:6, ], 2), longtable = T, booktabs = T)
 knitr::kable(result[[4]][1:6, ], longtable = T, booktabs = T)
 ```
 
-**Table S3 -** Lognormal parameter output. From left to right: mode label, total number concentration (n cm^-3^), geometric standard deviation, geometric mean diameter (nm), maximum measured concentration for identified peak (dN/dlogD~p~), lower peak diameter limit (nm), diameter of peak (nm), upper peak diameter limit (nm), width of identified peak in bins, Bayesian Information Criterion of model, . Note rounding is not applied by default.
+**Table S3 -** Lognormal parameter output. From left to right: mode label, total number concentration (n cm^-3^), geometric standard deviation, geometric mean diameter (nm), maximum measured concentration for identified peak (dN/dlogD~p~), lower peak diameter limit (nm), diameter of peak (nm), upper peak diameter limit (nm), width of identified peak in bins, Bayesian Information Criterion of model, residual sum of squares, total sum of squares, coefficient of correlation, and Student's t-test p-values for mode parameters. Note rounding is not applied by default. Notation is limited by data.frame formatting.
 
 ```{r, echo = F}
 
@@ -222,7 +229,7 @@ knitr::kable(output2, longtable = T, booktabs = T)
 
 **Table S4** - Statistical evaluation of the summed mode fits compared to the actual measurement. Pearson correlation coefficient, root mean square error of concentration (dN/dlogD~p~) , max-min normalized root mean square error concentration (dN/dlogD~p~), root mean square error of number concentration (n cm^-3^) , max-min normalized root mean square error of number concentration (n cm^-3^) , output of Student's t-test, and Chi-squared goodness-of-fit. Note as mentioned in the article, significance or goodness-of-fit testing did not demonstrate effectiveness in evaluating the model performance.
 
-```{r}
+```{r, echo = F}
 
 knitr::kable(round(result[[6]], 2))
 ```
@@ -234,6 +241,7 @@ knitr::kable(round(result[[6]], 2))
 # Frequency is null here because I already grouped data above
 # Here we are sending the log to a specific location
 tmp <- multimodal.fitting(dataPSD.TSI,
+                          log.path,
                           labeling = T,
                           frequency = NULL,
                           max.iterations = 30,

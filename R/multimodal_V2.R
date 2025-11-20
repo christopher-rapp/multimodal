@@ -80,7 +80,10 @@ multimodal.fitting <- function(data, log.path, labeling, frequency, max.iteratio
       }
 
       log.path <- file.path(paste0(log.path, "/multimodal", filename, "_",  format(Sys.time(), "%Y%m%d%H%M%S"), ".log"))
-      print(paste0("Log Path: ", log.path))
+
+      if (verbose){
+        print(paste0("Log Path: ", log.path))
+      }
 
       LOG <- logr::log_open(log.path, show_notes = F)
     }
@@ -607,8 +610,8 @@ multimodal.fitting <- function(data, log.path, labeling, frequency, max.iteratio
               FVU <- FVU.i
             }
 
-            tmp.print <- paste0(date.time.c, ": Current Loop Iteration: ", i, ", Remaining Variance: ", FVU, "%",
-                                ", Number of Modes: ", nrow(rbindlist(purrr::compact(peak.fitting))))
+            tmp.print <- paste0(date.time.c, ": Current Loop: ", i, ", Remaining Variance: ", FVU, "%",
+                                ", # of Modes: ", nrow(rbindlist(purrr::compact(peak.fitting))))
 
             # Move to next peak
             i <- i + 1
