@@ -43,11 +43,12 @@
 # data = rawSEMS.df
 
 
-multimodal.fitting <- function(data, log.path, labeling, frequency, max.iterations, max.modes, smoothing, lower.limit, upper.limit, NMRSE.threshold, FVU.threshold, FVU.tolerance, verbose){
+multimodal.fitting <- function(data, log.path, plotting, labeling, frequency, max.iterations, max.modes, smoothing, lower.limit, upper.limit, NMRSE.threshold, FVU.threshold, FVU.tolerance, verbose){
 
   # Default arguments ----------------------------------------------------------
 
   if(missing(labeling)) labeling <- T
+  if(missing(plotting)) plotting <- T
   if(missing(max.iterations)) max.iterations <- 20
   if(missing(max.modes)) max.modes <- 5
   if(missing(smoothing)) smoothing <- T
@@ -791,7 +792,7 @@ multimodal.fitting <- function(data, log.path, labeling, frequency, max.iteratio
       }
 
       # Plotting ---------------------------------------------------------------
-      {
+      if (plotting){
         plot.df <- output %>%
           pivot_longer(
             cols = !c("Dp"),
