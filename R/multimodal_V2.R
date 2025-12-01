@@ -32,15 +32,6 @@
 #'
 #' @examples
 
-# max.iterations = 30
-# max.modes = 10
-# lower.limit = 10
-# upper.limit = 1500
-# accuracy = 0.05
-# verbose = T
-# log.path = '/Users/christopherrapp/Documents'
-#
-# data = rawSEMS.df
 
 
 multimodal.fitting <- function(data, log.path, plotting, labeling, frequency, max.iterations, max.modes, smoothing, lower.limit, upper.limit, NMRSE.threshold, FVU.threshold, FVU.tolerance, verbose){

@@ -275,9 +275,11 @@ tmp <- multimodal.fitting(dataPSD.TSI,
 tmp$`2022-03-23 06:03:41`$plot
 ```
 
-**Figure 2** - Example of applying the multimodal.fitting function to a day of SPL averaged from 6AM to 6 PM. Note with the high averaging time a small peak appears where NPF events skew the average distribution between 10 - 20 nm.
+**Figure S2** - Example of applying the multimodal.fitting function to a day of SPL averaged from 6AM to 6 PM. Note with the high averaging time a small peak appears where NPF events skew the average distribution between 10 - 20 nm.
 
 Within this example TSI file for SPL there is a NPF event, but currently the averaging across the entire day removes all temporal variation. We will instead select times between 10:00 and 11:00 local time where the NPF event is just beginning and use high frequency data with smoothing to account for noise. We will only show two examples.
+
+For the hour of data, 9 of the 12 fittings for the beginning of the NPF event (75% were successful) (i.e. explained 90% of concentration variance and had a NRMSE of 0.1).
 
 ```{r, fig.width = 8, fig.height = 8, fig.align = "center", echo=FALSE}
 
@@ -302,8 +304,13 @@ tmp <- multimodal.fitting(data,
 plots <- map(tmp, 2)
 
 plots$`2022-03-23 15:20:00`
-plots$`2022-03-23 15:55:00`
-
 ```
 
-Now for the hour of data, 9 of the 12 fittings for the beginning of the NPF event (75% were successful) (i.e. explained 90% of concentration variance and had a NRMSE of 0.1).
+**Figure S3** - Example of applying the multimodal.fitting function to a 5-minute scan of a particle size distribution collected at SPL for the time 2022-03-23 15:20:00 UTC. This is just prior to an NPF event.
+
+```{r, fig.width = 8, fig.height = 8, fig.align = "center", echo=FALSE}
+
+plots$`2022-03-23 15:55:00`
+```
+
+**Figure S4** - Example of applying the multimodal.fitting function to a 5-minute scan of a particle size distribution collected at SPL for the time 2022-03-23 15:55:00 UTC. This is during an NPF event.
