@@ -191,6 +191,14 @@ multimodal.fitting <- function(data, log.path, plotting, labeling, frequency, ma
 
     export.list <- lapply(data.ls, function(z){
 
+      # Remove empty columns to prevent errors downstream
+      {
+        keep.c <- which(unname(z[, apply(z, 2, function(x) !all(is.na(x)))]))
+
+        z <- z %>%
+          select(all_of(keep.c))
+      }
+
       # Used for logging
       date.time.c <- lubridate::as_datetime(as.numeric(first(z[, time.index, with = F])))
       date.time.end.c <- lubridate::as_datetime(as.numeric(last(z[, time.index, with = F])))
@@ -560,6 +568,13 @@ multimodal.fitting <- function(data, log.path, plotting, labeling, frequency, ma
                 # Print to log
                 log_print(tmp.print, console = FALSE)
               }
+
+              smooth.break = F
+
+              m = m + 1
+              i = i + 1
+
+              next
             } else if (isTRUE(any(p.N >= 0.05, p.GSD >= 0.05, p.Dpg >= 0.05)) == T){
 
               tmp.print <- paste0(date.time.c, ": Current Loop: ", i, ", LM-NLS significance greater than 0.05")
@@ -632,7 +647,11 @@ multimodal.fitting <- function(data, log.path, plotting, labeling, frequency, ma
 
           if (length(tmp.ls) == 0){
 
-            export.ls <- list("pass" = flag.control, "plot" = NULL, "data" = export.df, "predict" = NULL, "fits" = NULL, "evaluation" = export.pf)
+            # If model fails to initialize due to early overestimation(noise in dataset typically)
+            # Export
+            export.df$`Actual dNdlogDp` = tmp.data$dNdlogDp
+
+            export.ls <- list("pass" = FALSE, "plot" = NULL, "data" = export.df, "predict" = NULL, "fits" = NULL, "evaluation" = export.pf)
             return(export.ls)
           }
 

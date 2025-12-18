@@ -1,4 +1,16 @@
-readPSD_NAS <- function(filepath){
+#' Title
+#'
+#' @param filepath
+#' @param level Either level 1 or level 2 data, must be specific
+#'
+#' @returns
+#' @export
+#'
+#' @examples
+
+readPSD_NAS <- function(filepath, level){
+
+  if (missing(level)) {stop("Must specify level of data (e.g., 1 or 2)")}
 
   # List files if multiple
   files <- list.files(filepath, full.names = T)
@@ -19,15 +31,20 @@ readPSD_NAS <- function(filepath){
     # Identify where the variable headers are located
     header.ix = as.numeric(str_extract(tmp.nas[1, 1], "(\\d+)\\s\\d+", group = T))
 
-    # Extract
-    header.c <- tmp.nas[header.ix, ]
+    if (level == 1){
+
+      # Create a dataframe
+      data <- fread(x, skip = header.ix - 1, header = T)
+
+    } else if (level == 2){
+
+      # Create a dataframe
+      data <- tmp.nas[as.numeric(header.ix):nrow(tmp.nas), ]
+      data <- read.table(text = data, header = T)
+    }
 
     # Retrieve metadata
     meta.data <- as.vector(tmp.nas[1:(as.numeric(header.ix) - 1), 1])
-
-    # Create a dataframe
-    data <- tmp.nas[as.numeric(header.ix):nrow(tmp.nas), ]
-    data <- read.table(text = data, header = T)
 
     # Identify standard variable labels
     var1 <- str_which(meta.data, "end_time")
@@ -56,7 +73,9 @@ readPSD_NAS <- function(filepath){
     }
 
     # For PSD's retrieve the mean
-    {
+    if (level == 2){
+
+      # This is all the mean data columns
       keep.c <- str_which(variables.c, "mean")
 
       # This keeps the two time columns
@@ -65,20 +84,25 @@ readPSD_NAS <- function(filepath){
       # This keeps the flag variable
       keep.c <- append(keep.c, length(variables.c))
 
+      # Subset the data
       data <- data[, keep.c]
 
-      # Which variables are labeled with mean
+      # Subset the variables names
       tmp.c <- variables.c[keep.c]
+    } else if (level == 1){
+
+      # There is no temperature or pressure data for level 1 datasets
+      tmp.c <- variables.c
     }
 
     # Binned data
     {
       # Use regex
-      bin.ix <- str_which(tmp.c, "D=\\d+")
+      bin.ix <- str_which(tmp.c, "D\\s*=\\s*\\d+")
       binned.c <- tmp.c[bin.ix]
 
       # Extract bins
-      binned.c <- as.numeric(str_extract(binned.c, "(\\d*\\.\\d*)"))
+      binned.c <- as.numeric(trimws(str_extract(binned.c, "[D\\s*=\\s*](\\d+(?:\\.\\d+)?)[\\s*nm]")))
 
       # Setnames as the bins
       tmp.c[bin.ix] <- binned.c
