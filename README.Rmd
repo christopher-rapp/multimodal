@@ -2,9 +2,9 @@
 title: "Curve fitting algorithm for multimodal particle size distributions – a theoretical basis"
 date: "2025-11-20"
 output:
-  pdf_document:
-    toc: true
   github_document:
+    toc: true
+  pdf_document:
     toc: true
 linkcolor: blue
 header-includes:
@@ -34,9 +34,9 @@ Source code for helper read functions are housed here [https://github.com/christ
 
 ------------------------------------------------------------------------
 
-# 1 Setup
+# S1 Setup
 
-## 1.1 Retrieve Read Functions
+## S1.1 Retrieve Read Functions
 
 ```{r, echo=FALSE, message=FALSE}
 
@@ -52,7 +52,7 @@ devtools::source_url("https://raw.githubusercontent.com/christopher-rapp/multimo
 
 ```
 
-## 1.2 Import Libraries
+## S1.2 Import Libraries
 
 ```{r, message=F}
 
@@ -75,7 +75,7 @@ library(CFtime)
 knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = TRUE)
 ```
 
-## 1.3 User Paths
+## S1.3 User Paths
 
 To download the example data for BMI and TSI visit. For NASA-AMES or netCDF examples see linked sources below.
 
@@ -95,11 +95,11 @@ import.path.NAS = paste0(dir.path, '/example/NASA-AMES/')
 
 ```
 
-# 2. Formatting Data
+# S2. Formatting Data
 
 Raw view of data format is appended to the bottom of this document
 
-## 2.1 Brechtel Manufacturing Inc. (BMI) Data
+## S2.1 Brechtel Manufacturing Inc. (BMI) Data
 
 ```{r}
 
@@ -109,7 +109,7 @@ BMI.data.ls <- readPSD_BMI(import.path.BMI, tz = "US/Eastern")
 dataPSD.BMI <- BMI.data.ls[[1]]
 ```
 
-## 2.2 TSI Data
+## S2.2 TSI Data
 
 Use example data from Storm Peak Laboratory for a new particle formation event (NPF) on 2022-03-23.
 
@@ -121,7 +121,7 @@ TSI.data.ls <- readPSD_TSI(import.path.TSI, tz = "US/Mountain")
 dataPSD.TSI <- TSI.data.ls[[1]]
 ```
 
-## 2.3 netCDF Data
+## S2.3 netCDF Data
 
 Data were obtained from the Atmospheric Radiation Measurement (ARM) User Facility, a U.S. Department of Energy (DOE) Office of Science user facility managed by the Biological and Environmental Research Program.
 
@@ -139,7 +139,7 @@ NC.data.ls <- readPSD_NC(import.path.NC)
 dataPSD.NC <- NC.data.ls[[1]]
 ```
 
-## 2.4 NASA-AMES Data
+## S2.4 NASA-AMES Data
 
 Data obtained from <https://ebas-data.nilu.no/DataSets.aspx?stations=US9050R&InstrumentTypes=smps&fromDate=1970-01-01&toDate=2025-12-31>.
 
@@ -153,11 +153,11 @@ NAS.data.ls <- readPSD_NAS(import.path.NAS, level = 1)
 dataPSD.NAS <- NAS.data.ls[[1]]
 ```
 
-# 3. Running multimodal
+# S3. Running multimodal
 
 Let's run multimodal on an example dataset using a Brechtel SEMS (Model 2002). Note the log path will need to be changed to whatever location you'd like it sent to!
 
-## 3.1 Example 1 - Laboratory Data
+## S3.1 Example 1 - Laboratory Data
 
 ```{r}
 
@@ -182,7 +182,7 @@ result <- multimodal.fitting(dataPSD.BMI,
 result <- flatten(result)
 ```
 
-### 3.1.1 Outputs
+### S3.1.1 Outputs
 
 The first element of result is a pass flag i.e. T or F
 
@@ -238,7 +238,7 @@ knitr::kable(output2, longtable = T, booktabs = T)
 knitr::kable(round(result[[6]], 2))
 ```
 
-## 3.2 Example 2 - Storm Peak Laboratory
+## S3.2 Example 2 - Storm Peak Laboratory
 
 ```{r, fig.width = 8, fig.height = 8, fig.align = "center", echo=FALSE}
 
@@ -287,8 +287,8 @@ For the hour of data, 9 of the 12 fittings for the beginning of the NPF event (7
 
 ```{r, fig.width = 8, fig.height = 8, fig.align = "center", echo=FALSE}
 
-data <- subset(dataPSD.TSI, dataPSD.TSI$`Local Time` >= as.POSIXct("2022-03-23 11:00:00") &
-                 dataPSD.TSI$`Local Time` <= as.POSIXct("2022-03-23 12:00:00"))
+data <- subset(dataPSD.TSI, dataPSD.TSI$`Local Time` >= as.POSIXct("2022-03-23 08:00:00") &
+                 dataPSD.TSI$`Local Time` <= as.POSIXct("2022-03-23 10:00:00"))
 
 # Frequency is null here because I already grouped data above
 tmp <- multimodal.fitting(data,

@@ -7,38 +7,45 @@ theoretical basis
 
 
 
-- [1 Setup](#1-setup)
-  - [1.1 Retrieve Read Functions](#11-retrieve-read-functions)
-  - [1.2 Import Libraries](#12-import-libraries)
-  - [1.3 User Paths](#13-user-paths)
-- [2. Formatting Data](#2-formatting-data)
-  - [2.1 Brechtel Manufacturing Inc. (BMI)
-    Data](#21-brechtel-manufacturing-inc-bmi-data)
-  - [2.2 TSI Data](#22-tsi-data)
-  - [2.3 netCDF Data](#23-netcdf-data)
-  - [2.4 NASA-AMES Data](#24-nasa-ames-data)
-- [3. Running multimodal](#3-running-multimodal)
-  - [3.1 Example 1 - Laboratory Data](#31-example-1---laboratory-data)
-    - [3.1.1 Outputs](#311-outputs)
-  - [3.2 Example 2 - Storm Peak
-    Laboratory](#32-example-2---storm-peak-laboratory)
+- [S1 Setup](#s1-setup)
+  - [S1.1 Retrieve Read Functions](#s11-retrieve-read-functions)
+  - [S1.2 Import Libraries](#s12-import-libraries)
+  - [S1.3 User Paths](#s13-user-paths)
+- [S2. Formatting Data](#s2-formatting-data)
+  - [S2.1 Brechtel Manufacturing Inc. (BMI)
+    Data](#s21-brechtel-manufacturing-inc-bmi-data)
+  - [S2.2 TSI Data](#s22-tsi-data)
+  - [S2.3 netCDF Data](#s23-netcdf-data)
+  - [S2.4 NASA-AMES Data](#s24-nasa-ames-data)
+- [S3. Running multimodal](#s3-running-multimodal)
+  - [S3.1 Example 1 - Laboratory Data](#s31-example-1---laboratory-data)
+    - [S3.1.1 Outputs](#s311-outputs)
+  - [S3.2 Example 2 - Storm Peak
+    Laboratory](#s32-example-2---storm-peak-laboratory)
 
 ------------------------------------------------------------------------
 
-Christopher N. Rapp<sup>1</sup>, Sining Niu<sup>2</sup>, Yue
-Zhang<sup>2</sup>, A. Gannet Hallar<sup>3</sup>, Fred J.
-Brechtel<sup>4</sup>, and Daniel J. Cziczo<sup>1</sup>
+Christopher N. Rapp<sup>1</sup>, Gerardo Carrillo-Cardenas<sup>2</sup>,
+Tareq Hussein<sup>3,4</sup>, Sining Niu<sup>5</sup>, Yue
+Zhang<sup>5</sup>, Fred J. Brechtel<sup>6</sup>, A. Gannet
+Hallar<sup>2</sup>, and Daniel J. Cziczo<sup>1</sup>
 
 <sup>1</sup>Department of Earth, Atmospheric, and Planetary Sciences,
 Purdue University, West Lafayette, Indiana, 47906-2051, USA
 
-<sup>2</sup>Department of Atmospheric Sciences, Texas A&M University,
+<sup>2</sup>Department of Atmospheric Sciences, University of Utah, Salt
+Lake City, Utah, 84112-0102, USA <sup>3</sup>University of Helsinki,
+Faculty of Science, Institute for Atmospheric and Earth System Research
+(INAR/Physics), FI-00014 UHEL Helsinki, Finland
+
+<sup>4</sup>University of Jordan, School of Science, Department of
+Physics, Environmental and Atmospheric Research Laboratory (EARL),
+Amman, 11942 Jordan
+
+<sup>5</sup>Department of Atmospheric Sciences, Texas A&M University,
 College Station, Texas, 77843-3150, USA
 
-<sup>3</sup>Department of Atmospheric Sciences, University of Utah, Salt
-Lake City, Utah, 84112-0102, USA
-
-<sup>4</sup>Brechtel Manufacturing Incorporated, Hayward, California,
+<sup>6</sup>Brechtel Manufacturing Incorporated, Hayward, California,
 94544, USA
 
 *Correspondence to*: Christopher N. Rapp (christopherrapp@icloud.com)
@@ -51,11 +58,11 @@ class="uri">https://github.com/christopher-rapp/multimodal.git</a>
 
 ------------------------------------------------------------------------
 
-# 1 Setup
+# S1 Setup
 
-## 1.1 Retrieve Read Functions
+## S1.1 Retrieve Read Functions
 
-## 1.2 Import Libraries
+## S1.2 Import Libraries
 
 ``` r
 library(stringr)
@@ -69,9 +76,10 @@ library(ggplot2)
 library(purrr)
 library(patchwork)
 library(ncdf4)
+library(CFtime)
 ```
 
-## 1.3 User Paths
+## S1.3 User Paths
 
 To download the example data for BMI and TSI visit. For NASA-AMES or
 netCDF examples see linked sources below.
@@ -80,11 +88,11 @@ netCDF examples see linked sources below.
 
 Define user paths such as ‘~/Library/Documents/multimodal/example/BMI/’
 
-# 2. Formatting Data
+# S2. Formatting Data
 
 Raw view of data format is appended to the bottom of this document
 
-## 2.1 Brechtel Manufacturing Inc. (BMI) Data
+## S2.1 Brechtel Manufacturing Inc. (BMI) Data
 
 ``` r
 BMI.data.ls <- readPSD_BMI(import.path.BMI, tz = "US/Eastern")
@@ -94,7 +102,7 @@ BMI.data.ls <- readPSD_BMI(import.path.BMI, tz = "US/Eastern")
 dataPSD.BMI <- BMI.data.ls[[1]]
 ```
 
-## 2.2 TSI Data
+## S2.2 TSI Data
 
 Use example data from Storm Peak Laboratory for a new particle formation
 event (NPF) on 2022-03-23.
@@ -107,7 +115,7 @@ TSI.data.ls <- readPSD_TSI(import.path.TSI, tz = "US/Mountain")
 dataPSD.TSI <- TSI.data.ls[[1]]
 ```
 
-## 2.3 netCDF Data
+## S2.3 netCDF Data
 
 Data were obtained from the Atmospheric Radiation Measurement (ARM) User
 Facility, a U.S. Department of Energy (DOE) Office of Science user
@@ -135,7 +143,7 @@ NC.data.ls <- readPSD_NC(import.path.NC)
 dataPSD.NC <- NC.data.ls[[1]]
 ```
 
-## 2.4 NASA-AMES Data
+## S2.4 NASA-AMES Data
 
 Data obtained from
 <https://ebas-data.nilu.no/DataSets.aspx?stations=US9050R&InstrumentTypes=smps&fromDate=1970-01-01&toDate=2025-12-31>.
@@ -151,20 +159,24 @@ projects have supported development of data and meta data reporting
 schemes in dialog with data providers (EU)(CREATE, ACTRIS and others). 
 
 ``` r
-NAS.data.ls <- readPSD_NAS(import.path.NAS)
+NAS.data.ls <- readPSD_NAS(import.path.NAS, level = 1)
+```
 
+    ## Warning in FUN(X[[i]], ...): NAs introduced by coercion
+
+``` r
 # Read functions export data as a list to account for
 # multiple files in a directory
 dataPSD.NAS <- NAS.data.ls[[1]]
 ```
 
-# 3. Running multimodal
+# S3. Running multimodal
 
 Let’s run multimodal on an example dataset using a Brechtel SEMS (Model
 2002). Note the log path will need to be changed to whatever location
 you’d like it sent to!
 
-## 3.1 Example 1 - Laboratory Data
+## S3.1 Example 1 - Laboratory Data
 
 ``` r
 # Frequency is null here because I already grouped data
@@ -177,7 +189,7 @@ result <- multimodal.fitting(dataPSD.BMI, log.path, frequency = NULL,
     FVU.threshold = 5, FVU.tolerance = 0.1, verbose = T)
 ```
 
-    ## [1] "Log Path: ~/Library/CloudStorage/Box-Box/Multimodal Curve Fitting/log//multimodal20231031181523_20251121102643.log"
+    ## [1] "Log Path: /Users/christopherrapp/Library/CloudStorage/Box-Box/[L1FR] djcziczo/Purdue Box - Chris/Projects/Multimodal Curve Fitting/log//multimodal20231031151523_20260608111930.log"
     ## [1] "Current Dataset Time: 2023-10-31 22:15:23 UTC"
     ## [1] "Dataset sampling frequency is 2.4 min"
     ## [1] "2023-10-31 22:15:23: Current Loop: 1, Remaining Variance: 94.93%, # of Modes: 1"
@@ -194,7 +206,7 @@ result <- multimodal.fitting(dataPSD.BMI, log.path, frequency = NULL,
 result <- flatten(result)
 ```
 
-### 3.1.1 Outputs
+### S3.1.1 Outputs
 
 The first element of result is a pass flag i.e. T or F
 
@@ -206,7 +218,7 @@ result$pass
 
 The second is the plot which consists of three panels
 
-<img src="README_files/figure-gfm/unnamed-chunk-11-1.png" style="display: block; margin: auto;" />
+<img src="README_files/figure-gfm/unnamed-chunk-11-1.png" alt="" style="display: block; margin: auto;" />
 
 **Figure S1** - An example of how to use the multimodal algorithm on
 example laboratory data. Note this reproduces the full version of Figure
@@ -290,18 +302,18 @@ goodness-of-fit. Note as mentioned in the article, significance or
 goodness-of-fit testing did not demonstrate effectiveness in evaluating
 the model performance.
 
-| Pearson Correlation |    RMSE | NRMSE | dN RMSE | dN NRMSE | Students T Test | Chi-Squared |
-|--------------------:|--------:|------:|--------:|---------:|----------------:|------------:|
-|                0.99 | 2132.57 |  0.03 |   37.15 |     0.03 |            0.85 |        0.24 |
+| Pearson Correlation | RMSE | NRMSE | dN RMSE | dN NRMSE | Students T Test | Chi-Squared | Elapsed Time |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0.99 | 2132.57 | 0.03 | 37.15 | 0.03 | 0.85 | 0.24 | 0.94 |
 
-## 3.2 Example 2 - Storm Peak Laboratory
+## S3.2 Example 2 - Storm Peak Laboratory
 
     ## [1] "2022-03-23 06:03:41: Error, please modify lower and upper limits to accommadate data set"
 
 Notice the failure message? This is because the dataset begins for bin
 diameter 9.14. Now we can retry with adjusted limits.
 
-<img src="README_files/figure-gfm/unnamed-chunk-17-1.png" style="display: block; margin: auto;" />
+<img src="README_files/figure-gfm/unnamed-chunk-17-1.png" alt="" style="display: block; margin: auto;" />
 
 **Figure S2** - Example of applying the multimodal.fitting function to a
 day of SPL averaged from 6AM to 6 PM. Note with the high averaging time
@@ -318,13 +330,13 @@ For the hour of data, 9 of the 12 fittings for the beginning of the NPF
 event (75% were successful) (i.e. explained 90% of concentration
 variance and had a NRMSE of 0.1).
 
-<img src="README_files/figure-gfm/unnamed-chunk-18-1.png" style="display: block; margin: auto;" />
+<img src="README_files/figure-gfm/unnamed-chunk-18-1.png" alt="" style="display: block; margin: auto;" />
 
 **Figure S3** - Example of applying the multimodal.fitting function to a
 5-minute scan of a particle size distribution collected at SPL for the
 time 2022-03-23 15:20:00 UTC. This is just prior to an NPF event.
 
-<img src="README_files/figure-gfm/unnamed-chunk-19-1.png" style="display: block; margin: auto;" />
+<img src="README_files/figure-gfm/unnamed-chunk-19-1.png" alt="" style="display: block; margin: auto;" />
 
 **Figure S4** - Example of applying the multimodal.fitting function to a
 5-minute scan of a particle size distribution collected at SPL for the
