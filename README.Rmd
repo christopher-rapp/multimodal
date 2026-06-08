@@ -14,15 +14,17 @@ header-includes:
 
 ------------------------------------------------------------------------
 
-Christopher N. Rapp^1^, Sining Niu^2^, Yue Zhang^2^, A. Gannet Hallar^3^, Fred J. Brechtel^4^, and Daniel J. Cziczo^1^
+Christopher N. Rapp^1^, Gerardo Carrillo-Cardenas^2^, Tareq Hussein^3,4^, Sining Niu^5^, Yue Zhang^5^, Fred J. Brechtel^6^, A. Gannet Hallar^2^, and Daniel J. Cziczo^1^
 
 ^1^Department of Earth, Atmospheric, and Planetary Sciences, Purdue University, West Lafayette, Indiana, 47906-2051, USA
 
-^2^Department of Atmospheric Sciences, Texas A&M University, College Station, Texas, 77843-3150, USA
+^2^Department of Atmospheric Sciences, University of Utah, Salt Lake City, Utah, 84112-0102, USA ^3^University of Helsinki, Faculty of Science, Institute for Atmospheric and Earth System Research (INAR/Physics), FI-00014 UHEL Helsinki, Finland
 
-^3^Department of Atmospheric Sciences, University of Utah, Salt Lake City, Utah, 84112-0102, USA
+^4^University of Jordan, School of Science, Department of Physics, Environmental and Atmospheric Research Laboratory (EARL), Amman, 11942 Jordan
 
-^4^Brechtel Manufacturing Incorporated, Hayward, California, 94544, USA
+^5^Department of Atmospheric Sciences, Texas A&M University, College Station, Texas, 77843-3150, USA
+
+^6^Brechtel Manufacturing Incorporated, Hayward, California, 94544, USA
 
 *Correspondence to*: Christopher N. Rapp (christopherrapp\@icloud.com)
 
@@ -38,7 +40,7 @@ Source code for helper read functions are housed here [https://github.com/christ
 
 ```{r, echo=FALSE, message=FALSE}
 
-devtools::source_url("https://raw.githubusercontent.com/christopher-rapp/multimodal/refs/heads/main/R/multimodal_V2.R")
+devtools::source_url("https://raw.githubusercontent.com/christopher-rapp/multimodal/refs/heads/main/R/multimodal_V3.R")
 
 devtools::source_url("https://raw.githubusercontent.com/christopher-rapp/multimodal/refs/heads/main/R/readPSD_BMI.R")
 
@@ -65,6 +67,7 @@ library(ggplot2)
 library(purrr)
 library(patchwork)
 library(ncdf4)
+library(CFtime)
 ```
 
 ```{r, echo = F}
@@ -82,12 +85,13 @@ Define user paths such as '\~/Library/Documents/multimodal/example/BMI/'
 
 ```{r, echo = F, message = F}
 
-log.path = '~/Library/CloudStorage/Box-Box/Multimodal Curve Fitting/log/'
+dir.path = '/Users/christopherrapp/Library/CloudStorage/Box-Box/[L1FR] djcziczo/Purdue Box - Chris/Projects/Multimodal Curve Fitting'
+log.path = paste0(dir.path, '/log/')
 
-import.path.BMI = '~/Library/CloudStorage/Box-Box/Multimodal Curve Fitting/example/BMI/'
-import.path.TSI = '~/Library/CloudStorage/Box-Box/Multimodal Curve Fitting/example/TSI/'
-import.path.NC = '~/Library/CloudStorage/Box-Box/Multimodal Curve Fitting/example/netCDF/'
-import.path.NAS = '~/Library/CloudStorage/Box-Box/Multimodal Curve Fitting/example/NASA-AMES/'
+import.path.BMI = paste0(dir.path, '/example/BMI/')
+import.path.TSI = paste0(dir.path, '/example/TSI/')
+import.path.NC  = paste0(dir.path, '/example/netCDF/')
+import.path.NAS = paste0(dir.path, '/example/NASA-AMES/')
 
 ```
 
@@ -143,7 +147,7 @@ The EBAS database has largely been funded by the UN-ECE CLRTAP (EMEP), AMAP and 
 
 ```{r}
 
-NAS.data.ls <- readPSD_NAS(import.path.NAS)
+NAS.data.ls <- readPSD_NAS(import.path.NAS, level = 1)
 
 # Read functions export data as a list to account for multiple files in a directory
 dataPSD.NAS <- NAS.data.ls[[1]]

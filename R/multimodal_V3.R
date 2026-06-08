@@ -872,6 +872,7 @@ multimodal.fitting <- function(data, log.path, plotting, labeling, frequency, ma
 
     # Plotting ---------------------------------------------------------------
     if (plotting){
+
       plot.df <- output %>%
         pivot_longer(
           cols = !c("Dp"),
@@ -941,7 +942,7 @@ multimodal.fitting <- function(data, log.path, plotting, labeling, frequency, ma
       text.labels <- plot.df %>%
         group_by(Mode) %>%
         arrange(desc(Concentration)) %>%
-        slice(1) %>%
+        dplyr::slice(1) %>%
         ungroup()
 
       text.labels <- text.labels %>%
@@ -978,7 +979,7 @@ multimodal.fitting <- function(data, log.path, plotting, labeling, frequency, ma
             panel.grid.minor = element_line(colour = "grey80", linewidth = 0.01),
             panel.border = element_rect(colour = "black", fill = NA),
             axis.title.y = element_text(angle = 90, vjust = 2),
-            plot.margin = unit(c(1, 1, 0.1, 1), "cm"),
+            plot.margin = margin(1, 1, 0.1, 1, unit = "cm"),
             legend.background = element_blank(),
             legend.box.background = element_blank(),
             legend.key = element_blank(),
@@ -1006,7 +1007,7 @@ multimodal.fitting <- function(data, log.path, plotting, labeling, frequency, ma
             panel.grid.minor = element_line(colour = "grey80", linewidth = 0.01),
             panel.border = element_rect(colour = "black", fill = NA),
             axis.title.y = element_text(angle = 90, vjust = 2),
-            plot.margin = unit(c(1, 1, 0.1, 1), "cm"),
+            plot.margin = margin(1, 1, 0.1, 1, unit = "cm"),
             legend.background = element_blank(),
             legend.box.background = element_blank(),
             legend.key = element_blank(),
@@ -1032,7 +1033,7 @@ multimodal.fitting <- function(data, log.path, plotting, labeling, frequency, ma
             panel.border = element_rect(colour = "black", fill = NA),
             axis.title.x = element_text(angle = 0, vjust = -1),
             axis.title.y = element_text(angle = 90, vjust = 2),
-            plot.margin = unit(c(1, 1, 1, 1), "cm"),
+            plot.margin = margin(1, 1, 1, 1, unit = "cm"),
             legend.background = element_blank(),
             legend.box.background = element_blank(),
             legend.key = element_blank(),
