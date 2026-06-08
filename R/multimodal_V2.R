@@ -81,7 +81,6 @@ multimodal.fitting <- function(data, log.path, plotting, labeling, frequency, ma
     }
 
     # Return objects -------------------------------------------------------------
-
     flag.control <- TRUE
     export.gg <- list()
     export.df <- list()
@@ -191,14 +190,6 @@ multimodal.fitting <- function(data, log.path, plotting, labeling, frequency, ma
 
     export.list <- lapply(data.ls, function(z){
 
-      # Remove empty columns to prevent errors downstream
-      {
-        keep.c <- which(unname(z[, apply(z, 2, function(x) !all(is.na(x)))]))
-
-        z <- z %>%
-          select(all_of(keep.c))
-      }
-
       # Used for logging
       date.time.c <- lubridate::as_datetime(as.numeric(first(z[, time.index, with = F])))
       date.time.end.c <- lubridate::as_datetime(as.numeric(last(z[, time.index, with = F])))
@@ -235,15 +226,11 @@ multimodal.fitting <- function(data, log.path, plotting, labeling, frequency, ma
       # Number Density Matrix --------------------------------------------------
       {
         # Subset data and create a numeric matrix
-        dNdlogDp.mat <- z[, select.c, with = F]
-        dNdlogDp.mat <- sapply(dNdlogDp.mat, as.numeric)
+        dNdlogDp.mat <- as.matrix(z[, select.c, with = F])
 
         # Calculate number density by multipling by the log difference to convert
         # dNdlogDp to dN
-        dN.mat = t(t(dNdlogDp.mat)*dlogDp)
-
-        # Remove empty rows
-        dN.mat <- dN.mat[complete.cases(dN.mat), ]
+        dN.mat <- sweep(as.matrix(dNdlogDp.mat), 2, dlogDp, "*")
 
         # This is to prevent single modes of organic particles to throw an error
         if (is.null(nrow(dNdlogDp.mat))){
@@ -260,7 +247,7 @@ multimodal.fitting <- function(data, log.path, plotting, labeling, frequency, ma
         }
 
         # Test if sum of all particle density is lower than 100 n/cc
-        if (sum(dN.mat) < 100){
+        if (sum(dN.mat, na.rm = T) < 100){
 
           flag.control <- FALSE
 
@@ -310,6 +297,8 @@ multimodal.fitting <- function(data, log.path, plotting, labeling, frequency, ma
                               dlogDp = dlogDp,
                               dN = dN,
                               dNdlogDp = dNdlogDp)
+
+        tmp.data <- na.omit(tmp.data)
 
         peak.fitting <- list()
         model.fitting <- list()
@@ -500,7 +489,7 @@ multimodal.fitting <- function(data, log.path, plotting, labeling, frequency, ma
               }
               )
 
-              # Stop code from continuing if there are no ramps detected which means the dataset will be empty and continue to throw errors
+              # Stop code from continuing if the NLS ftting fails
               if (NLS.break) {
 
                 tmp.print <- paste0(date.time.c, ": Terminating loop ", i, ", model fitting failure")
@@ -647,9 +636,19 @@ multimodal.fitting <- function(data, log.path, plotting, labeling, frequency, ma
 
           if (length(tmp.ls) == 0){
 
-            # If model fails to initialize due to early overestimation(noise in dataset typically)
-            # Export
-            export.df$`Actual dNdlogDp` = tmp.data$dNdlogDp
+            # If model fails to initialize due to early overestimation (noise in dataset typically)
+            # Export actual data with filled NA's for anything the model would have provided
+            export.df <- data.frame(
+              "Dp" = tmp.data$Dp,
+              "Predicted dNdlogDp" = NA,
+              "Predicted dN" = NA,
+              "Actual dNdlogDp" = tmp.data$dNdlogDp,
+              "Actual dN" = tmp.data$dN,
+              "Residual dNdlogDp" = NA,
+              "Residual dN" = NA,
+              "Ratio" = NA,
+              check.names = F
+            )
 
             export.ls <- list("pass" = FALSE, "plot" = NULL, "data" = export.df, "predict" = NULL, "fits" = NULL, "evaluation" = export.pf)
             return(export.ls)
@@ -679,7 +678,7 @@ multimodal.fitting <- function(data, log.path, plotting, labeling, frequency, ma
           peaks.df <- peaks.df %>%
             select(Max:Width)
 
-          #
+          # Export summary of fitting values and parameters
           export.lm <- cbind(tmp.df, peaks.df) %>%
             relocate(Max:Width, .after = Dpg)
         }
@@ -708,7 +707,6 @@ multimodal.fitting <- function(data, log.path, plotting, labeling, frequency, ma
 
       # Statistics -------------------------------------------------------------
       {
-
         # Calculate various statistical measures
 
         # Matching predictions to measurements
@@ -718,6 +716,7 @@ multimodal.fitting <- function(data, log.path, plotting, labeling, frequency, ma
 
           # Diameters
           Dp <- output$Dp[match.ix]
+          dlogDp <- tmp.data$dlogDp
 
           # Predicted Lognormal Concentration
           predicted.dNdlogDp <- output$dNdlogDp[match.ix]
