@@ -1,6 +1,6 @@
 ---
 title: "Curve fitting algorithm for multimodal particle size distributions – a theoretical basis"
-date: "2025-11-20"
+date: "2026-06-08"
 output:
   github_document:
     toc: true

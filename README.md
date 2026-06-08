@@ -1,7 +1,7 @@
 Curve fitting algorithm for multimodal particle size distributions – a
 theoretical basis
 ================
-2025-11-20
+2026-06-08
 
 
 
@@ -189,7 +189,7 @@ result <- multimodal.fitting(dataPSD.BMI, log.path, frequency = NULL,
     FVU.threshold = 5, FVU.tolerance = 0.1, verbose = T)
 ```
 
-    ## [1] "Log Path: /Users/christopherrapp/Library/CloudStorage/Box-Box/[L1FR] djcziczo/Purdue Box - Chris/Projects/Multimodal Curve Fitting/log//multimodal20231031151523_20260608111930.log"
+    ## [1] "Log Path: /Users/christopherrapp/Library/CloudStorage/Box-Box/[L1FR] djcziczo/Purdue Box - Chris/Projects/Multimodal Curve Fitting/log//multimodal20231031151523_20260608112012.log"
     ## [1] "Current Dataset Time: 2023-10-31 22:15:23 UTC"
     ## [1] "Dataset sampling frequency is 2.4 min"
     ## [1] "2023-10-31 22:15:23: Current Loop: 1, Remaining Variance: 94.93%, # of Modes: 1"
