@@ -16,9 +16,14 @@
 #' @param max.modes
 #' @param lower.limit
 #' @param upper.limit
-#' @param accuracy
 #' @param verbose
-#'
+#' @param plotting
+#' @param labeling
+#' @param smoothing
+#' @param NMRSE.threshold
+#' @param FVU.threshold
+#' @param FVU.tolerance
+#' @param low.concentration
 #'
 #' @returns A 6-level list containing:
 #' 1. Success flag either TRUE or FALSE for easy filtering, if true # of modes
@@ -26,15 +31,8 @@
 #' 3. Mode parameters and performance report;
 #' 4. Plot list for visual check
 #'
-#' @import logr
-#'
-#' @export
-#'
-#' @examples
 
-
-
-multimodal.fitting <- function(data, log.path, plotting, labeling, frequency, max.iterations, max.modes, smoothing, lower.limit, upper.limit, NMRSE.threshold, FVU.threshold, FVU.tolerance, verbose){
+multimodal.fitting <- function(data, log.path, plotting, labeling, frequency, max.iterations, max.modes, smoothing, lower.limit, upper.limit, NMRSE.threshold, FVU.threshold, FVU.tolerance, low.concentration, verbose){
 
   # Default arguments ---------------------------------------------------------#
   if(missing(labeling)) labeling <- T
@@ -49,6 +47,7 @@ multimodal.fitting <- function(data, log.path, plotting, labeling, frequency, ma
   if(missing(FVU.tolerance)) FVU.tolerance <- 1
   if(missing(verbose)) verbose <- FALSE
   if(missing(log.path)) log.path <- tempdir()
+  if(missing(low.concentration)) low.concentration <- 100
 
   # Data return function ---------------------------------------------------------------------#
   model.output <- function(pass = FALSE, plot = NULL, data = NULL, predict = NULL, fits = NULL, evaluation = NULL, benchmark.start = NULL){
@@ -296,8 +295,8 @@ multimodal.fitting <- function(data, log.path, plotting, labeling, frequency, ma
         dN <- colMeans(dN.mat, na.rm = T)
       }
 
-      # Test if sum of all particle density is lower than 100 n/cc
-      if (sum(dN.mat, na.rm = T) < 10){
+      # Test if sum of all particle density is lower than 100 n/cc by default
+      if (sum(dN.mat, na.rm = T) < low.concentration){
 
         flag.control <- FALSE
 

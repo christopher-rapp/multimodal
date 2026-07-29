@@ -2,9 +2,9 @@
 title: "Curve fitting algorithm for multimodal particle size distributions – a theoretical basis"
 date: "2026-06-08"
 output:
-  github_document:
-    toc: true
   pdf_document:
+    toc: true
+  github_document:
     toc: true
 linkcolor: blue
 header-includes:
