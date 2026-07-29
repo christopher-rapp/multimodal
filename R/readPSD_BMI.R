@@ -1,4 +1,38 @@
-readPSD_BMI <- function(import.path, tz){
+#' @title readPSD_BMI
+#' Read BMI-format particle size distribution files
+#'
+#' @author Christopher Rapp
+#'
+#' @description
+#' Recursively scans a directory for BMI instrument output files (MONO_DATA,
+#' SEMS_CONC, SEMS_AUX, SEMS_RAW, SEMS_VOLTS naming patterns) and reads all
+#' detected \code{SEMS_CONC} files into a list of data.frames. Column names
+#' are stripped of their \code{Bin###_} prefix, a \code{UTC Time} (and, if
+#' applicable, \code{Local Time}) column is constructed from the file's date
+#' and time fields, and a \code{Size Range} column is added reflecting the
+#' span of binned diameters present in that file.
+#'
+#' @param filepath Character string giving the path to a directory to
+#'   search recursively (\code{list.files(..., recursive = TRUE)}) for BMI
+#'   instrument files.
+#' @param tz Character string giving the time zone of the timestamps in the
+#'   files, e.g. \code{"UTC"} or an Olson name such as
+#'   \code{"America/Los_Angeles"}. If \code{"UTC"}, timestamps are read
+#'   directly into a \code{UTC Time} column. Otherwise, timestamps are first
+#'   read into a \code{Local Time} column at the given time zone and then
+#'   converted to a separate \code{UTC Time} column via
+#'   \code{lubridate::with_tz()}.
+#'
+#' @returns A list of \code{data.frame}s, one per non-empty \code{SEMS_CONC}
+#'   file found, each with: a \code{Units} column (\code{"dNdlogDp"}), a
+#'   \code{UTC Time} column (and \code{Local Time} if \code{tz != "UTC"}), a
+#'   \code{Size Range} column (max minus min binned diameter in that file),
+#'   and columns reordered so the detected \code{POSIXt} time column comes
+#'   first. Files that produce zero-row results are dropped from the
+#'   returned list.
+#'
+#' @export
+readPSD_BMI <- function(filepath, tz){
 
   # -------------------------------------------------------------------------- #
   ##### SECTION: File Wrangling #####
@@ -6,16 +40,12 @@ readPSD_BMI <- function(import.path, tz){
 
   {
     # List all level0 csv files
-    files.bmi <- list.files(path = import.path,
+    files.bmi <- list.files(path = filepath,
                             recursive = T,
                             full.names = T)
 
     # Detect files of specific type
-    files.MONO_DATA <- files.bmi[grepl(paste("MONO_DATA", collapse = '|'), ignore.case = T, files.bmi)]
     files.SEMS_CONC <- files.bmi[grepl(paste("SEMS_CONC", collapse = '|'), ignore.case = T, files.bmi)]
-    files.SEMS_AUX <- files.bmi[grepl(paste("SEMS_AUX", collapse = '|'), ignore.case = T, files.bmi)]
-    files.SEMS_RAW <- files.bmi[grepl(paste("SEMS_RAW", collapse = '|'), ignore.case = T, files.bmi)]
-    files.SEMS_VOLTS <- files.bmi[grepl(paste("SEMS_VOLTS", collapse = '|'), ignore.case = T, files.bmi)]
   }
 
   # ------------------------------------------------------------------------ #
@@ -40,10 +70,9 @@ readPSD_BMI <- function(import.path, tz){
       tmp.df <- NULL
     }
 
-    filename.c <- str_extract(x, "(?<=CONC_)\\d{6}\\w{1}\\d{6}")
-
     if (nrow(tmp.df) >= 1){
 
+      # Note the units for the binned data
       tmp.df <- tmp.df %>%
         mutate("Units" = "dNdlogDp")
 
@@ -63,7 +92,7 @@ readPSD_BMI <- function(import.path, tz){
         tmp.df$`UTC Time` = with_tz(tmp.df$`Local Time`, tzone = "UTC")
       }
 
-      # Retrieve median diameters and associated columns
+      # Retrieve midpoint diameters and associated columns
       bins.ix = str_which(colnames(tmp.df), "\\d+\\.\\d+")
       bins.nm = as.numeric(colnames(tmp.df)[bins.ix])
 
@@ -78,8 +107,9 @@ readPSD_BMI <- function(import.path, tz){
     # Find columns containing the POSIX class
     time.index = c(grep("POSIXt", col.classes))
 
+    # Structure so time column is in the front
     tmp.df <- tmp.df %>%
-      select(all_of(time.index), everything())
+      dplyr::select(all_of(time.index), everything())
   })
 
   # Remove empty data.frames

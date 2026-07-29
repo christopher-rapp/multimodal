@@ -1,16 +1,34 @@
-#' Title
+#' @title readPSD_NAS.R
+#' Read NASA-AMES format particle size distribution files
 #'
-#' @param filepath
-#' @param level Either level 1 or level 2 data, must be specific
+#' @author Christopher Rapp
 #'
-#' @returns
+#' @description
+#' Reads one or more files in the standard NASA-AMES (1001) format, as
+#' commonly used for ambient/airborne aerosol measurements, and parses each
+#' into a data.frame. Metadata lines preceding the variable header are used
+#' to recover the file's reference date and to relabel columns (start/end
+#' time, binned diameters, pressure, temperature). Only columns representing
+#' the "mean" of a measurement (plus the time and flag columns) are
+#' retained. Time columns, stored as fractional days since a reference date
+#' per the NASA-AMES convention, are converted to \code{POSIXct}.
+#'
+#' @param filepath Character string giving either the path to a single
+#'   NASA-AMES file, or the path to a directory containing one or more such
+#'   files. If \code{filepath} is a directory, all files immediately inside
+#'   it are read (via \code{list.files(filepath, full.names = TRUE)}); if
+#'   no files are found there, \code{filepath} itself is treated as the file
+#'   to read.
+#'
+#' @returns A list of \code{data.frame}s, one per file read, each containing
+#'   a \code{starttime} and \code{endtime} column (converted to
+#'   \code{POSIXct}), the retained "mean" measurement columns (binned
+#'   diameter columns renamed to their numeric diameter value, pressure and
+#'   temperature columns relabeled with detected units where present), and
+#'   the trailing flag column.
+#'
 #' @export
-#'
-#' @examples
-
-readPSD_NAS <- function(filepath, level){
-
-  if (missing(level)) {stop("Must specify level of data (e.g., 1 or 2)")}
+readPSD_NAS <- function(filepath){
 
   # List files if multiple
   files <- list.files(filepath, full.names = T)
@@ -29,26 +47,21 @@ readPSD_NAS <- function(filepath, level){
     tmp.nas <- read.delim(x, header = F)
 
     # Identify where the variable headers are located
-    header.ix = as.numeric(str_extract(tmp.nas[1, 1], "(\\d+)\\s\\d+", group = T))
+    header.ix = as.numeric(stringr::str_extract(tmp.nas[1, 1], "(\\d+)\\s\\d+", group = T))
 
-    if (level == 1){
-
-      # Create a dataframe
-      data <- fread(x, skip = header.ix - 1, header = T)
-
-    } else if (level == 2){
-
-      # Create a dataframe
-      data <- tmp.nas[as.numeric(header.ix):nrow(tmp.nas), ]
-      data <- read.table(text = data, header = T)
-    }
+    # Extract
+    header.c <- tmp.nas[header.ix, ]
 
     # Retrieve metadata
     meta.data <- as.vector(tmp.nas[1:(as.numeric(header.ix) - 1), 1])
 
+    # Create a dataframe
+    data <- tmp.nas[as.numeric(header.ix):nrow(tmp.nas), ]
+    data <- read.table(text = data, header = T)
+
     # Identify standard variable labels
-    var1 <- str_which(meta.data, "end_time")
-    var2 <- str_which(meta.data, "numflag")
+    var1 <- stringr::str_which(meta.data, "end_time")
+    var2 <- stringr::str_which(meta.data, "numflag")
 
     # Variable names
     variables.c <- tmp.nas[var1:var2, ]
@@ -60,8 +73,8 @@ readPSD_NAS <- function(filepath, level){
       time.format <- meta.data[9]
 
       # Regular expressions to catch dates
-      date1 <- str_extract(date.range, "\\d{4}\\s{1}\\d{2}\\s{1}\\d{2}")
-      date2 <- str_extract(date.range, "\\s{1}(\\d{4}\\s{1}\\d{2}\\s{1}\\d{2})", group = T)
+      date1 <- stringr::str_extract(date.range, "\\d{4}\\s{1}\\d{2}\\s{1}\\d{2}")
+      date2 <- stringr::str_extract(date.range, "\\s{1}(\\d{4}\\s{1}\\d{2}\\s{1}\\d{2})", group = T)
 
       # Format to UTC
       date1 <- as.POSIXct(date1, format = "%Y %m %d", tz = "UTC")
@@ -73,10 +86,8 @@ readPSD_NAS <- function(filepath, level){
     }
 
     # For PSD's retrieve the mean
-    if (level == 2){
-
-      # This is all the mean data columns
-      keep.c <- str_which(variables.c, "mean")
+    {
+      keep.c <- stringr::str_which(variables.c, "mean")
 
       # This keeps the two time columns
       keep.c <- append(1:2, keep.c)
@@ -84,25 +95,21 @@ readPSD_NAS <- function(filepath, level){
       # This keeps the flag variable
       keep.c <- append(keep.c, length(variables.c))
 
-      # Subset the data
+      # Assumes data.table format
       data <- data[, keep.c]
 
-      # Subset the variables names
+      # Which variables are labeled with mean
       tmp.c <- variables.c[keep.c]
-    } else if (level == 1){
-
-      # There is no temperature or pressure data for level 1 datasets
-      tmp.c <- variables.c
     }
 
     # Binned data
     {
       # Use regex
-      bin.ix <- str_which(tmp.c, "D\\s*=\\s*\\d+")
+      bin.ix <- stringr::str_which(tmp.c, "D=\\d+")
       binned.c <- tmp.c[bin.ix]
 
       # Extract bins
-      binned.c <- as.numeric(trimws(str_extract(binned.c, "[D\\s*=\\s*](\\d+(?:\\.\\d+)?)[\\s*nm]")))
+      binned.c <- as.numeric(stringr::str_extract(binned.c, "(\\d*\\.\\d*)"))
 
       # Setnames as the bins
       tmp.c[bin.ix] <- binned.c
@@ -110,20 +117,24 @@ readPSD_NAS <- function(filepath, level){
 
     # Temperature and pressure if present
     {
-      if (any(str_which(tmp.c, "hPa|pressure|Pressure|pres."))){
+      # Pressure
+      if (any(stringr::str_which(tmp.c, "hPa|pressure|Pressure|pres."))){
 
-        tmp.c[str_which(tmp.c, "hPa|pressure|Pressure|pres.")] <- "pressure (hPa)"
+        # Rename
+        tmp.c[stringr::str_which(tmp.c, "hPa|pressure|Pressure|pres.")] <- "pressure (hPa)"
       }
 
+      # Temperature
+      if (any(stringr::str_which(tmp.c, "temperature|Temperature|Temp."))){
 
-      if (any(str_which(tmp.c, "temperature|Temperature|Temp."))){
+        # Rename
+        tmp.c[stringr::str_which(tmp.c, "temperature|Temperature|Temp.")] <- "temperature"
 
-        tmp.c[str_which(tmp.c, "temperature|Temperature|Temp.")] <- "temperature"
-
-        if (mean(data[, str_which(tmp.c, "temperature|Temperature|Temp.")]) > 50){
-          tmp.c[str_which(tmp.c, "temperature|Temperature|Temp.")] <- "temperature (K)"
+        # If temperature exceeds 70, it is in Kelvin
+        if (mean(data[, stringr::str_which(tmp.c, "temperature|Temperature|Temp.")]) > 70){
+          tmp.c[stringr::str_which(tmp.c, "temperature|Temperature|Temp.")] <- "temperature (K)"
         } else {
-          tmp.c[str_which(tmp.c, "temperature|Temperature|Temp.")] <- "temperature (C)"
+          tmp.c[stringr::str_which(tmp.c, "temperature|Temperature|Temp.")] <- "temperature (C)"
         }
       }
     }
@@ -133,7 +144,7 @@ readPSD_NAS <- function(filepath, level){
     tmp.c[2] <- "endtime"
 
     # Rename dataframe
-    setnames(data, new = tmp.c)
+    data.table::setnames(data, new = tmp.c)
 
     # Format time to POSIX
     {
